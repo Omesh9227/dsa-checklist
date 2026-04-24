@@ -48,3 +48,21 @@ dsa-checklist/
 ```bash
 git clone https://github.com/your-username/dsa-checklist.git
 cd dsa-checklist
+```
+
+### 2️⃣ Backend Setup
+cd server
+npm install
+
+Create .env file inside /server:
+
+DATABASE_URL=your_postgresql_connection_string
+PORT=5000
+
+Run backend:
+
+npm run dev
+3️⃣ Frontend Setup
+cd client
+npm install
+npm start
