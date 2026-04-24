@@ -37,3 +37,14 @@ dsa-checklist/
 │   └── server.js
 ├── README.md
 └── .gitignore
+```
+
+---
+
+## ⚙️ Local Setup
+
+### 1️⃣ Clone the repository
+
+```bash
+git clone https://github.com/your-username/dsa-checklist.git
+cd dsa-checklist
