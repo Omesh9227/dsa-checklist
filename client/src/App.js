@@ -39,7 +39,7 @@ function App() {
       return alert("Fill all fields");
     }
 
-    const table = tables.find((t) => t.id == selectedTable);
+    const table = tables.find((t) => t.id === selectedTable);
     if (table?.tasks.some((task) => task.name === taskName)) {
       return alert("Task already exists");
     }
