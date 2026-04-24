@@ -51,11 +51,14 @@ cd dsa-checklist
 ```
 
 ### 2️⃣ Backend Setup
+```bash
 cd server
 npm install
+```
 
 Create .env file inside /server:
 
+```bash
 DATABASE_URL=your_postgresql_connection_string
 PORT=5000
 
