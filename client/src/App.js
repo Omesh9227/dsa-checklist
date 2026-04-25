@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import API from "./services/api";
 import "./App.css";
+import toast, { Toaster } from "react-hot-toast";
 
 function App() {
   const [tables, setTables] = useState([]);
@@ -23,55 +24,89 @@ function App() {
       setTables(res.data);
     } catch (err) {
       console.error(err);
+      toast.error("Failed to fetch data");
     }
   };
 
+  // ================= CREATE TABLE =================
   const createTable = async () => {
-    if (!tableName) return alert("Enter table name");
+    if (!tableName.trim()) {
+      return toast.error("Enter table name");
+    }
 
-    await API.post("/table", { name: tableName });
-    setTableName("");
-    fetchTables();
+    try {
+      await API.post("/table", { name: tableName });
+
+      toast.success("Table created 🎉");
+
+      setTableName("");
+      fetchTables();
+
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Error creating table");
+    }
   };
 
+  // ================= ADD TASK =================
   const addTask = async () => {
-    if (!taskName || !selectedTable) {
-      return alert("Fill all fields");
+    if (!taskName.trim() || !selectedTable) {
+      return toast.error("Fill all fields");
     }
 
-    const table = tables.find((t) => t.id === selectedTable);
-    if (table?.tasks.some((task) => task.name === taskName)) {
-      return alert("Task already exists");
+    const table = tables.find((t) => t.id === Number(selectedTable));
+
+    if (table?.tasks.some((task) => task.name.toLowerCase() === taskName.toLowerCase())) {
+      return toast.error("Task already exists");
     }
 
-    await API.post(`/table/${selectedTable}/task`, {
-      name: taskName,
-      url: taskURL,
-    });
+    try {
+      await API.post(`/table/${selectedTable}/task`, {
+        name: taskName,
+        url: taskURL,
+      });
 
-    setTaskName("");
-    setTaskURL("");
-    setSelectedTable("");
-    fetchTables();
+      toast.success("Task added ✅");
+
+      setTaskName("");
+      setTaskURL("");
+      setSelectedTable("");
+
+      fetchTables();
+
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Error adding task");
+    }
   };
 
+  // ================= TOGGLE =================
   const toggleTask = async (task) => {
-    await API.put(`/task/${task.id}`, {
-      name: task.name,
-      url: task.url,
-      completed: !task.completed,
-    });
+    try {
+      await API.put(`/task/${task.id}`, {
+        name: task.name,
+        url: task.url,
+        completed: !task.completed,
+      });
 
-    fetchTables();
+      fetchTables();
+    } catch {
+      toast.error("Update failed");
+    }
   };
 
+  // ================= DELETE =================
   const deleteTask = async (id) => {
     if (!window.confirm("Delete this task?")) return;
 
-    await API.delete(`/task/${id}`);
-    fetchTables();
+    try {
+      await API.delete(`/task/${id}`);
+      toast.success("Deleted 🗑️");
+      fetchTables();
+    } catch {
+      toast.error("Delete failed");
+    }
   };
 
+  // ================= EDIT =================
   const startEdit = (task) => {
     setEditTaskId(task.id);
     setEditName(task.name);
@@ -79,22 +114,37 @@ function App() {
   };
 
   const updateTask = async () => {
-    await API.put(`/task/${editTaskId}`, {
-      name: editName,
-      url: editURL,
-      completed: false,
-    });
+    if (!editName.trim()) {
+      return toast.error("Task name required");
+    }
 
-    setEditTaskId(null);
-    fetchTables();
+    try {
+      await API.put(`/task/${editTaskId}`, {
+        name: editName,
+        url: editURL,
+        completed: false,
+      });
+
+      toast.success("Updated ✏️");
+
+      setEditTaskId(null);
+      fetchTables();
+
+    } catch (err) {
+      toast.error(err.response?.data?.error || "Update failed");
+    }
   };
 
   return (
     <div className="container mt-5">
+      {/* 🔥 TOASTER */}
+      <Toaster position="top-right" />
+
       <h2 className="text-center mb-5">🚀 DSA Tracker</h2>
 
       {/* TOP SECTION */}
       <div className="row mb-5">
+
         {/* Create Table */}
         <div className="col-md-6">
           <div className="card-custom">

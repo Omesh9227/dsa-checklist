@@ -11,9 +11,8 @@ exports.createTable = async (req, res) => {
 
         name = name.trim();
 
-        // 🔥 Case-insensitive duplicate check
         const existing = await pool.query(
-            "SELECT * FROM tables WHERE LOWER(name) = LOWER($1)",
+            "SELECT 1 FROM tables WHERE LOWER(name) = LOWER($1)",
             [name]
         );
 
@@ -26,32 +25,39 @@ exports.createTable = async (req, res) => {
             [name]
         );
 
-        res.status(201).json(result.rows[0]);
+        return res.status(201).json(result.rows[0]);
 
     } catch (err) {
         console.error("CREATE TABLE ERROR ❌:", err);
-        res.status(500).json({ error: "Server error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
 // ================= GET TABLES =================
 exports.getTables = async (req, res) => {
     try {
-        const tables = await pool.query("SELECT * FROM tables ORDER BY id");
+        const tablesRes = await pool.query(
+            "SELECT * FROM tables ORDER BY id"
+        );
 
-        for (let table of tables.rows) {
-            const tasks = await pool.query(
-                "SELECT * FROM tasks WHERE table_id=$1 ORDER BY id",
-                [table.id]
-            );
-            table.tasks = tasks.rows;
-        }
+        const tables = tablesRes.rows;
 
-        res.json(tables.rows);
+        // Fetch tasks in parallel (better performance)
+        await Promise.all(
+            tables.map(async (table) => {
+                const tasksRes = await pool.query(
+                    "SELECT * FROM tasks WHERE table_id=$1 ORDER BY id",
+                    [table.id]
+                );
+                table.tasks = tasksRes.rows;
+            })
+        );
+
+        return res.json(tables);
 
     } catch (err) {
         console.error("GET TABLE ERROR ❌:", err);
-        res.status(500).json({ error: err.message });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
@@ -61,15 +67,19 @@ exports.addTask = async (req, res) => {
         const { tableId } = req.params;
         let { name, url } = req.body;
 
+        if (!tableId || isNaN(tableId)) {
+            return res.status(400).json({ error: "Invalid table ID" });
+        }
+
         if (!name || !name.trim()) {
             return res.status(400).json({ error: "Task name is required" });
         }
 
         name = name.trim();
 
-        // ✅ Check table exists
+        // Check table exists
         const table = await pool.query(
-            "SELECT * FROM tables WHERE id=$1",
+            "SELECT 1 FROM tables WHERE id=$1",
             [tableId]
         );
 
@@ -77,9 +87,9 @@ exports.addTask = async (req, res) => {
             return res.status(404).json({ error: "Table not found" });
         }
 
-        // 🔥 Prevent duplicate task (same table)
+        // Duplicate check
         const duplicate = await pool.query(
-            "SELECT * FROM tasks WHERE table_id=$1 AND LOWER(name)=LOWER($2)",
+            "SELECT 1 FROM tasks WHERE table_id=$1 AND LOWER(name)=LOWER($2)",
             [tableId, name]
         );
 
@@ -92,11 +102,11 @@ exports.addTask = async (req, res) => {
             [tableId, name, url || null]
         );
 
-        res.status(201).json(result.rows[0]);
+        return res.status(201).json(result.rows[0]);
 
     } catch (err) {
         console.error("ADD TASK ERROR ❌:", err);
-        res.status(500).json({ error: "Server error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
@@ -106,7 +116,10 @@ exports.updateTask = async (req, res) => {
         const { taskId } = req.params;
         let { name, url, completed } = req.body;
 
-        // ✅ Check task exists
+        if (!taskId || isNaN(taskId)) {
+            return res.status(400).json({ error: "Invalid task ID" });
+        }
+
         const existingTask = await pool.query(
             "SELECT * FROM tasks WHERE id=$1",
             [taskId]
@@ -116,17 +129,17 @@ exports.updateTask = async (req, res) => {
             return res.status(404).json({ error: "Task not found" });
         }
 
+        const currentTask = existingTask.rows[0];
+
         if (!name || !name.trim()) {
             return res.status(400).json({ error: "Task name is required" });
         }
 
         name = name.trim();
 
-        const currentTask = existingTask.rows[0];
-
-        // 🔥 Prevent duplicate task name in same table
+        // Duplicate check
         const duplicate = await pool.query(
-            "SELECT * FROM tasks WHERE table_id=$1 AND LOWER(name)=LOWER($2) AND id != $3",
+            "SELECT 1 FROM tasks WHERE table_id=$1 AND LOWER(name)=LOWER($2) AND id!=$3",
             [currentTask.table_id, name, taskId]
         );
 
@@ -139,16 +152,16 @@ exports.updateTask = async (req, res) => {
             [
                 name,
                 url || null,
-                completed !== undefined ? completed : currentTask.completed,
+                typeof completed === "boolean" ? completed : currentTask.completed,
                 taskId
             ]
         );
 
-        res.json(result.rows[0]);
+        return res.json(result.rows[0]);
 
     } catch (err) {
         console.error("UPDATE TASK ERROR ❌:", err);
-        res.status(500).json({ error: "Server error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 };
 
@@ -156,6 +169,10 @@ exports.updateTask = async (req, res) => {
 exports.deleteTask = async (req, res) => {
     try {
         const { taskId } = req.params;
+
+        if (!taskId || isNaN(taskId)) {
+            return res.status(400).json({ error: "Invalid task ID" });
+        }
 
         const result = await pool.query(
             "DELETE FROM tasks WHERE id=$1 RETURNING *",
@@ -166,10 +183,10 @@ exports.deleteTask = async (req, res) => {
             return res.status(404).json({ error: "Task not found" });
         }
 
-        res.json({ message: "Task deleted successfully" });
+        return res.json({ message: "Task deleted successfully" });
 
     } catch (err) {
         console.error("DELETE TASK ERROR ❌:", err);
-        res.status(500).json({ error: "Server error" });
+        return res.status(500).json({ error: "Internal Server Error" });
     }
 };
