@@ -148,18 +148,25 @@ git push
 
 ## ✅ STEP 6: Create PostgreSQL on Render
 
-Go to:
-👉 https://render.com
-Steps:
+To set up your managed database instance, follow these steps:
 
-- New → PostgreSQL
-- Create database
-- Copy:
-```bash  
-Host
-DB name
-User
-Password
+1.  **Go to Render Dashboard:**
+    👉 [https://render.com](https://render.com)
+
+2.  **Initialize Database:**
+    -   Click the **New +** button in the top navigation.
+    -   Select **PostgreSQL** from the dropdown menu.
+    -   Fill in your database details (Name, Region, etc.).
+    -   Click **Create Database**.
+
+3.  **Retrieve Credentials:**
+    Once the database is provisioned, locate the **Connections** section and copy the following internal/external credentials:
+
+```bash
+Host:     <your-db-host>
+DB Name:  <your-database-name>
+User:     <your-username>
+Password: <your-password>
 ```
 
 ## ✅ STEP 7: Create backend service
