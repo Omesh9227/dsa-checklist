@@ -210,6 +210,20 @@ CREATE TABLE tasks (
     completed BOOLEAN DEFAULT FALSE
 );
 ```
+Connect to Database (Render)
+
+Use this command in terminal:
+
+```bash
+psql postgresql://dsa_checklist_user:********@your-host/dsa_checklist
+```
+
+Run this command on your terminal and you can perform Create, Update, Delete, Edit whatever you have added functionality in yuor project.
+
+⚠️ Important:
+
+- Never expose your real password in public repos
+- Always use .env file for secrets
 
 ## ✅ STEP 10: Deploy backend
 
