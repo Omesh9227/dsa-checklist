@@ -92,7 +92,7 @@ server/
  
 ## ✅ STEP 2: Install dependencies
 
-``bash
+```bash
 cd server
 npm install
 ```
