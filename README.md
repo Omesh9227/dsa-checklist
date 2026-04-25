@@ -272,7 +272,7 @@ Steps:
 - Import GitHub repo
 - Select project
 
-###⚙️ IMPORTANT SETTINGS
+### ⚙️ IMPORTANT SETTINGS
 Root Directory:
 ```bash
 client
